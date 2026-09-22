@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: simsundays
+
+  ssl:
+    bundle:
+      pem:
+        letsencrypt:
+          reload-on-update: false
+          keystore:
+            certificate: file:/etc/letsencrypt/live/sim.booba.uk/fullchain.pem
+            private-key: file:/etc/letsencrypt/live/sim.booba.uk/privkey.pem
+  mvc:
+    converters:
+      preferred-json-mapper: gson
+
+server:
+  port: 443
+  shutdown: graceful
+
+  ssl:
+    bundle: letsencrypt
+
+  error:
+    include-message: never
+    include-stacktrace: never
+
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain,text/css,text/javascript
+    min-response-size: 1024
+
+  http2:
+    enabled: true

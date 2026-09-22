@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Motorsport Telemetry & Event Roulette</title>
+    <meta charset="UTF-8">
+    <meta name="description" content="Motorsport Telemetry, Leaderboard & Event Roulette">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="/favicon.ico" rel="icon" type="image/x-icon" />
+
+    <!-- Dependencies -->
+    <script defer src="/js/jquery-4.0.0.min.js"></script>
+    <script defer src="/js/track.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Navigation Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">Motorsport Telemetry</h1>
+                <p class="text-xs text-slate-400">Live Session Dashboard</p>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="flex bg-slate-900 border border-slate-800 p-1 rounded-xl text-xs font-semibold">
+                <button id="btn-tab-roulette" class="px-4 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition-all">
+                    Event
+                </button>
+                <button id="btn-tab-leaderboard" class="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold transition-all">
+                    Leaderboard
+                </button>
+                <button id="btn-tab-telemetry" class="px-4 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition-all">
+                    Driver Telemetry
+                </button>
+            </div>
+        </header>
+
+        <!-- Session Track Metadata Header Bar (With Live Timestamp Timer Widget) -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 gap-3">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-500 uppercase tracking-wider text-[10px]">Track:</span>
+                    <span id="sessionTrack" class="text-white font-bold">--</span>
+                    <span id="sessionConfig" class="text-slate-500">(--)</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-500 uppercase tracking-wider text-[10px]">Car:</span>
+                    <span id="sessionCar" class="text-purple-400 font-bold">--</span>
+                </div>
+            </div>
+
+            <!-- Live Header Timer Widget -->
+            <div id="header-timer-container" class="flex items-center space-x-2 bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-lg transition-all duration-300">
+                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span id="header-timer-label" class="text-[10px] uppercase font-semibold text-slate-400 hidden sm:inline tracking-wider">
+                    Time Left:
+                </span>
+                <span id="header-timer-display" class="font-bold text-white text-sm tracking-wider">
+                    --:--:--
+                </span>
+                <span id="header-timer-badge" class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 uppercase">
+                    Stopped
+                </span>
+            </div>
+        </div>
+
+        <!-- TAB 1: HOTLAP LEADERBOARD -->
+        <div id="tab-leaderboard" class="space-y-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Live Driver Standings</h2>
+                    <span class="text-xs font-mono text-purple-400 bg-purple-950/60 border border-purple-800/50 px-2.5 py-1 rounded-full">Sorted by Fastest Lap</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left font-mono text-sm">
+                        <thead class="bg-slate-950/80 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-800">
+                        <tr>
+                            <th class="py-3 px-4 w-16 text-center">Pos</th>
+                            <th class="py-3 px-4">Driver</th>
+                            <th class="py-3 px-4">Car</th>
+                            <th class="py-3 px-4 text-center">Best Lap</th>
+                            <th class="py-3 px-4 text-center">Gap</th>
+                            <th class="py-3 px-4 text-center">Laps</th>
+                        </tr>
+                        </thead>
+                        <tbody id="leaderboardRows" class="divide-y divide-slate-800/60 text-slate-200">
+                        <!-- Dynamic Leaderboard Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: DRIVER TELEMETRY DASHBOARD -->
+        <div id="tab-telemetry" class="hidden space-y-6">
+            <div class="flex justify-between items-center bg-slate-900 border border-slate-800 rounded-xl p-4">
+                <div>
+                    <div class="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">Telemetry Target</div>
+                    <div class="flex items-center space-x-2 mt-0.5">
+                        <span id="driver" class="font-bold text-white text-xl">--</span>
+                        <span id="nation" class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold border border-slate-700/50">--</span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">Car Model</div>
+                    <div id="carModel" class="font-mono text-purple-400 font-bold text-base">--</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="relative bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-center items-center text-center">
+                    <div class="absolute top-4 right-4">
+                        <span id="isValidLap" class="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                            VALID
+                        </span>
+                    </div>
+                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Current Lap Time</div>
+                    <div id="currentLapTimeMs" class="font-mono text-5xl font-bold text-white tracking-tight">00:00.000</div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-center items-center text-center">
+                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Pace Delta vs Best</div>
+                    <div id="deltaTimeMs" class="font-mono text-5xl font-bold text-slate-300 tracking-tight">0.000s</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-center">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <div class="text-[10px] text-slate-500 uppercase tracking-wider">Predicted Lap</div>
+                    <div id="predictedLapTimeMs" class="text-xl font-bold text-amber-300 mt-1">00:00.000</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <div class="text-[10px] text-slate-500 uppercase tracking-wider">Last Lap Time</div>
+                    <div id="lastLaptimeMs" class="text-xl font-bold text-slate-300 mt-1">00:00.000</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <div class="text-[10px] text-slate-500 uppercase tracking-wider">Personal Best</div>
+                    <div id="bestLaptimeMs" class="text-xl font-bold text-purple-400 mt-1">00:00.000</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+                    <div class="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">Vehicle Speed</div>
+                    <div class="my-1">
+                        <span id="speedMph" class="font-mono text-3xl font-bold text-purple-400">0</span>
+                        <span class="text-xs text-slate-500 font-mono">MPH</span>
+                    </div>
+                    <div class="text-xs font-mono text-slate-400"><span id="speedKmh">0</span> KM/H</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+                    <div class="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">Selected Gear</div>
+                    <div id="gear" class="font-mono text-4xl font-bold text-white my-1">N</div>
+                    <div class="text-[10px] font-mono text-slate-500 uppercase">Position</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
+                    <div class="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">Total Laps</div>
+                    <div id="totalLapCount" class="font-mono text-4xl font-bold text-amber-400 my-1">0</div>
+                    <div class="text-[10px] font-mono text-slate-500 uppercase">Completed</div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-3">Pedal Inputs</div>
+                <div class="grid grid-cols-3 gap-3 font-mono">
+                    <div class="relative overflow-hidden bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                        <div id="accelBar" class="absolute top-0 left-0 bottom-0 bg-emerald-500/25 transition-all duration-100" style="width: 0%;"></div>
+                        <div class="relative flex justify-between items-center z-10 text-xs">
+                            <span class="text-emerald-400 font-semibold">Throttle</span>
+                            <span id="acceleratorPercent" class="font-bold text-slate-200">0%</span>
+                        </div>
+                    </div>
+                    <div class="relative overflow-hidden bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                        <div id="brakeBar" class="absolute top-0 left-0 bottom-0 bg-rose-500/25 transition-all duration-100" style="width: 0%;"></div>
+                        <div class="relative flex justify-between items-center z-10 text-xs">
+                            <span class="text-rose-400 font-semibold">Brake</span>
+                            <span id="brakePercent" class="font-bold text-slate-200">0%</span>
+                        </div>
+                    </div>
+                    <div class="relative overflow-hidden bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                        <div id="clutchBar" class="absolute top-0 left-0 bottom-0 bg-blue-500/25 transition-all duration-100" style="width: 0%;"></div>
+                        <div class="relative flex justify-between items-center z-10 text-xs">
+                            <span class="text-blue-400 font-semibold">Clutch</span>
+                            <span id="clutchPercent" class="font-bold text-slate-200">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 1: ASSETTO CORSA EVO EVENT ROULETTE & COUNTDOWN TIMER -->
+        <div id="tab-roulette" class="hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-white uppercase tracking-wide">AC EVO Event Generator</h2>
+                        <p class="text-xs text-slate-400">Randomized track layout, vehicle, time & weather</p>
+                    </div>
+                    <button id="btn-spin" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm tracking-wider uppercase transition-all shadow-lg shadow-purple-900/40">
+                        Spin!
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Track & Layout</div>
+                        <div id="slot-track" class="text-base font-bold text-purple-300 mt-1 truncate">Click Spin</div>
+                        <div id="slot-layout" class="text-xs text-slate-400 mt-0.5 truncate">--</div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Vehicle Selected</div>
+                        <div id="slot-car" class="text-base font-bold text-purple-300 mt-1 truncate">Click Spin</div>
+                        <div id="slot-class" class="text-xs text-slate-400 mt-0.5 truncate">--</div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Time of Day</div>
+                        <div id="slot-time" class="text-base font-bold text-amber-300 mt-1 truncate">Click Spin</div>
+                        <div id="slot-tod-desc" class="text-xs text-slate-400 mt-0.5 truncate">--</div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+                        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Weather Conditions</div>
+                        <div id="slot-weather" class="text-base font-bold text-cyan-300 mt-1 truncate">Click Spin</div>
+                        <div id="slot-track-cond" class="text-xs text-slate-400 mt-0.5 truncate">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COUNTDOWN TIMER (5-MIN LOADING GRACE FIRST -> 60-MIN RACE) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-2">
+                    <div>
+                        <h3 class="text-base font-bold text-white uppercase tracking-wide">Session Countdown Timer</h3>
+                        <p class="text-xs text-slate-400">5 Min Track Loading Grace Period (First) + 60 Min Main Race</p>
+                    </div>
+                    <div id="timer-phase-badge" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                        STOPPED
+                    </div>
+                </div>
+
+                <div class="text-center py-4 bg-slate-950 border border-slate-800 rounded-xl">
+                    <div id="timer-display" class="font-mono text-6xl sm:text-7xl font-bold text-white tracking-wider">
+                        01:05:00
+                    </div>
+                    <div id="timer-sub-text" class="text-xs font-mono text-slate-400 mt-2">
+                        05:00 Grace Period (First) + 60:00 Race
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-[10px] font-mono text-slate-400">
+                        <span>1) Loading Grace (5m)</span>
+                        <span>2) Main Race (60m)</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800 flex">
+                        <div id="bar-grace" class="bg-amber-500 h-full transition-all duration-300" style="width: 100%;"></div>
+                        <div id="bar-main" class="bg-purple-600 h-full transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
