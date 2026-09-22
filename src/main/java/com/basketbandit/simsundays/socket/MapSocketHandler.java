@@ -24,16 +24,6 @@ public class MapSocketHandler extends TextWebSocketHandler {
     private static final CopyOnWriteArrayList<WebSocketSession> clients = new CopyOnWriteArrayList<>();
     private static final Gson gson = new Gson();
 
-    public synchronized static void broadcastPing() {
-        clients.forEach(client -> {
-            try {
-                client.sendMessage(new TextMessage("ping"));
-            } catch(IOException e) {
-                log.warn("There was a problem contacting client, reason: {}", e.getMessage(), e);
-            }
-        });
-    }
-
     public synchronized static void broadcastUpdate(Driver driver) {
         clients.forEach(client -> {
             try {

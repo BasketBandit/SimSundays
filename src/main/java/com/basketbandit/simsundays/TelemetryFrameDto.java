@@ -1,8 +1,6 @@
 package com.basketbandit.simsundays;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import tools.jackson.databind.JsonNode;

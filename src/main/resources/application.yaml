@@ -15,7 +15,7 @@ spring:
       preferred-json-mapper: gson
 
 server:
-  port: 443
+  port: 8443
   shutdown: graceful
 
   ssl:
