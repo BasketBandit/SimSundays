@@ -12,15 +12,15 @@ public class Track {
     }
 
     public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+        return name != null ? name : "none";
     }
 
     public String getLayout() {
         return layout != null ? layout : "default";
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setLayout(String layout) {

@@ -10,7 +10,7 @@ public class Car {
     }
 
     public String getModel() {
-        return model;
+        return model != null ? model : "none";
     }
 
     public void setModel(String model) {

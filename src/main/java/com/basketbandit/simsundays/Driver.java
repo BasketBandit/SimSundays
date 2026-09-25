@@ -5,6 +5,7 @@ import com.basketbandit.simsundays.entity.Time;
 import com.basketbandit.simsundays.entity.Track;
 import com.google.gson.JsonObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,8 +15,8 @@ public class Driver {
 
     String gameVersion;
 
-    Track track;
-    Car car;
+    Track track = new Track("none", "default");
+    Car car = new Car("none");
 
     int speedMph;
     int speedKmh;
@@ -33,7 +34,7 @@ public class Driver {
     int predictedLapTimeMs;
     boolean isValidLap;
 
-    List<Time> times;
+    List<Time> times = new ArrayList<>();
 
     public Driver(String name) {
         this.name = name;
